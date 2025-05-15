@@ -1,95 +1,144 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CVW生成AI - Speak Freely</title>
-  <style>
-    body {
-      background: #f0f8ff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 1em;
-      text-align: center;
-    }
-    h1 {
-      color: #333;
-    }
-    #chat {
-      max-width: 600px;
-      margin: 1em auto;
-      text-align: left;
-      background: #fff;
-      padding: 1em;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .msg {
-      margin: 0.5em 0;
-    }
-    .user {
-      text-align: right;
-      color: #0066cc;
-    }
-    .ai {
-      text-align: left;
-      color: #222;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 1em;
-      width: 80%;
-      margin-top: 1em;
-    }
-    button {
-      width: 18%;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      margin-left: 2%;
-      border-radius: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Kids Support Hub（AI版）</title>
+    <style>
+        body{font-family:Arial,sans-serif;background:#fff5f5;margin:0;padding:20px;text-align:center}
+        #welcome-screen,#hub-container{max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:15px;box-shadow:0 2px 10px rgba(0,0,0,0.1);text-align:left}
+        #hub-container{display:none}
+        h1{color:#c71585;font-size:24px;margin-bottom:10px}
+        h2{color:#c71585;font-size:18px;margin-top:20px;border-bottom:1px solid #ffe4e1;padding-bottom:5px}
+        h3{color:#ff69b4;font-size:16px;margin-top:10px}
+        p,li{font-size:14px;color:#333;line-height:1.5}
+        .button{background:#ff69b4;color:#fff;padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-size:14px;margin:10px 0}
+        .button:hover{background:#ff4f9a}
+        #chat-box,#place-list,#donation-report{border:1px solid #e0e0e0;border-radius:10px;padding:15px;height:150px;overflow-y:scroll;background:#f9f9f9;margin-bottom:15px}
+        .chat-message,.place-item,.donation-item{margin:8px 0;padding:8px;border-radius:8px;font-size:13px}
+        .hub-message{background:#ffe4e1;max-width:80%;margin-left:5px}
+        .user-message{background:#f5e1ff;text-align:right;max-width:80%;margin-left:auto;margin-right:5px}
+        .place-item,.donation-item{background:#fff0f5}
+        #user-input{width:calc(100% - 20px);padding:10px;border:1px solid #e0e0e0;border-radius:10px;font-size:14px;margin-bottom:10px}
+        select{width:calc(100% - 20px);padding:8px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px}
+        #points{display:inline-block;background:#ffe4e1;padding:5px 10px;border-radius:10px;font-size:14px;margin-bottom:10px}
+        .premium{background:#98fb98;padding:5px}
+    </style>
 </head>
 <body>
-  <h1>CVW生成AI</h1>
-  <p>子ども・親・支援者のための共感型AI</p>
-  <div id="chat"></div>
-  <input type="text" id="userInput" placeholder="あなたの声を入力してください..." />
-  <button onclick="sendMessage()">送信</button>
+    <div id="welcome-screen">
+        <h1>Global Kids Support Hub（AI版）</h1>
+        <p>Kids Helper AIが24時間サポート！居場所検索やメンター相談を効率化。</p>
+        <p><strong>注意:</strong> 個人情報は入力しないでね。</p>
+        <button class="button" onclick="startHub()">ハブを始める</button>
+    </div>
+    <div id="hub-container">
+        <h1>Global Kids Support Hub</h1>
+        <div id="points">ポイント残高: <span id="points-value">100</span> Supportポイント</div>
+        <button class="button" onclick="upgradePremium()">プレミアム会員になる（500円/月）</button>
+        <h2>Kids Helper AIに相談</h2>
+        <div id="chat-box">
+            <div class="chat-message hub-message">Kids Helper AI: こんにちは！居場所を探したり、メンターに相談できます。何かお困りですか？</div>
+        </div>
+        <input type="text" id="user-input" placeholder="相談を入力..." onkeypress="if(event.key === 'Enter') sendMessage()">
+        <button onclick="sendMessage()" class="button">送信</button>
+        <h2>居場所を探す</h2>
+        <select id="place-type">
+            <option value="all">すべての居場所</option>
+            <option value="shokudo">児童食堂</option>
+            <option value="park">公園</option>
+            <option value="study">学習支援</option>
+        </select>
+        <button class="button" onclick="findPlace()">検索</button>
+        <div id="place-list"></div>
+        <h2>寄付状況</h2>
+        <div id="donation-report">
+            <div class="donation-item">寄付金の使途: 60% 居場所運営, 30% 教材, 10% 運営費<br>スポンサー: トヨタ（100万円）</div>
+        </div>
+        <button class="button" onclick="donate()">100円寄付（10ポイント付与）</button>
+    </div>
 
-  <script>
-    const chat = document.getElementById('chat');
-
-    function appendMessage(sender, text) {
-      const div = document.createElement('div');
-      div.className = 'msg ' + sender;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const input = document.getElementById('userInput');
-      const message = input.value.trim();
-      if (!message) return;
-      appendMessage('user', message);
-      input.value = '';
-
-      try {
-        const res = await fetch('https://cvwai.cvwjapan.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: message })
-        });
-        const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content || 'AIからの応答がありませんでした。';
-        appendMessage('ai', reply);
-      } catch (err) {
-        appendMessage('ai', 'エラーが発生しました。AIに接続できません。');
-      }
-    }
-  </script>
+    <script>
+        let userPoints = 100;
+        let isPremium = false;
+        let userProfile = { childAge: 5, needs: ["発達"] }; // 仮のプロフィール
+        function startHub(){
+            document.getElementById("welcome-screen").style.display="none";
+            document.getElementById("hub-container").style.display="block";
+        }
+        function sendMessage(){
+            const e=document.getElementById("user-input"),t=document.getElementById("chat-box"),n=e.value.trim().toLowerCase();
+            if(n){
+                const s=document.createElement("div");s.className="chat-message user-message",s.innerText="あなた: "+n,t.appendChild(s);
+                const a=document.createElement("div");a.className="chat-message hub-message",a.innerText="Kids Helper AI: "+getAIResponse(n),t.appendChild(a);
+                if(n.includes("ボランティア")){
+                    userPoints += 10;
+                    document.getElementById("points-value").innerText = userPoints;
+                    const reward=document.createElement("div");reward.className="chat-message hub-message";
+                    reward.innerText="Kids Helper AI: ボランティア参加ありがとう！10ポイント獲得！";t.appendChild(reward);
+                }
+                e.value="",t.scrollTop=t.scrollHeight;
+            }
+        }
+        function getAIResponse(e){
+            if(e.includes("貧困")){
+                return "貧困家庭向けに無料の居場所があります。『ほっこり食堂』がおすすめです。検索しますか？";
+            }else if(e.includes("発達")){
+                userProfile.needs.includes("発達") && userProfile.childAge <= 5
+                    ? "発達支援が必要な"+userProfile.childAge+"歳のお子さんに、『学びの部屋』がおすすめです。感覚過敏にも対応しています。検索しますか？"
+                    : "発達支援の居場所があります。『学びの部屋』を試してみませんか？";
+            }else if(e.includes("ボランティア")){
+                return "ボランティアでポイントを貯めてください！";
+            }else if(e.includes("寄付") || e.includes("使途")){
+                return "寄付金の60%は居場所運営、30%は教材、10%は運営費です。100円寄付で10ポイント付与されます。寄付しますか？";
+            }else if(e.includes("政治")){
+                return "政治的影響は排除しています。企業とコミュニティ主導で運営しています。";
+            }else{
+                return "居場所を探したり、寄付を検討してみてください！"+(isPremium?"<span class='premium'>プレミアム特典: 優先アドバイス</span>":"");
+            }
+        }
+        function findPlace(){
+            const type=document.getElementById("place-type").value,results=document.getElementById("place-list");results.innerHTML="";
+            const places=[
+                {type:"shokudo",name:"ほっこり食堂",desc:"無料食事",status:"予約可",support:"貧困優先",points:10},
+                {type:"park",name:"ひまわり公園",desc:"安全な遊び場",status:"予約不要",support:"一般",points:0},
+                {type:"study",name:"学びの部屋",desc:"発達支援あり",status:"予約可",support:"発達優先",points:20}
+            ];
+            const filtered=type==="all"?places:places.filter(p=>p.type===type);
+            if(filtered.length===0){
+                const noPlace=document.createElement("div");noPlace.className="place-item";noPlace.innerText="見つからなかったよ…";results.appendChild(noPlace);
+            }else{
+                filtered.forEach(p=>{
+                    const item=document.createElement("div");item.className="place-item";
+                    item.innerHTML=`${p.name}: ${p.desc} (${p.status})<br>対象: ${p.support}<br>必要ポイント: ${p.points}<br><button class="button" style="font-size:12px;padding:5px 10px;" onclick="reservePlace(${p.points}, '${p.name}')">${p.status==="予約可"?"予約":"詳細"}</button>`;
+                    results.appendChild(item);
+                });
+            }
+            results.style.display="block";
+        }
+        function reservePlace(points, name){
+            if(isPremium || userPoints >= points){
+                userPoints -= points;
+                document.getElementById("points-value").innerText = userPoints;
+                alert(`${name}を予約しました！残高: ${userPoints} Supportポイント`);
+            }else{
+                alert("ポイントが足りません！プレミアム会員か寄付で貯めてね。");
+            }
+        }
+        function donate(){
+            userPoints += 10;
+            document.getElementById("points-value").innerText = userPoints;
+            const report=document.getElementById("donation-report");
+            const item=document.createElement("div");item.className="donation-item";
+            item.innerText="寄付ありがとう！100円を追加。最新使途: 60% 居場所, 30% 教材, 10% 運営費";
+            report.appendChild(item);
+            report.scrollTop = report.scrollHeight;
+        }
+        function upgradePremium(){
+            isPremium = true;
+            alert("プレミアム会員になりました！月額500円で優先アドバイスが可能に。");
+            document.getElementById("chat-box").innerHTML += "<div class='chat-message hub-message'><span class='premium'>プレミアム特典: 優先アドバイスが有効</span></div>";
+        }
+    </script>
 </body>
 </html>
